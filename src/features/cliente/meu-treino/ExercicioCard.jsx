@@ -1,16 +1,8 @@
-import { useState } from 'react'
-
 // Elemento assinatura da tela do cliente: em vez de uma barra de progresso
 // genérica, cada série concluída "empilha" uma anilha — remete direto ao
 // objeto real do treino (peso/anilha) em vez de uma métrica abstrata.
 
-export default function ExercicioCard({ nome, series, repeticoes, cargaSugeridaKg }) {
-  const [feitas, setFeitas] = useState(0)
-
-  function marcarSerie() {
-    setFeitas((f) => Math.min(f + 1, series))
-  }
-
+export default function ExercicioCard({ nome, series, repeticoes, cargaSugeridaKg, feitas, onMarcarSerie }) {
   return (
     <div style={styles.card}>
       <div style={styles.info}>
@@ -18,9 +10,9 @@ export default function ExercicioCard({ nome, series, repeticoes, cargaSugeridaK
         <p style={styles.detalhe}>
           <span className="mono" style={styles.mono}>{series}x{repeticoes}</span>
           {' · '}
-          <span className="mono" style={styles.mono}>{cargaSugeridaKg}kg</span>
+          <span className="mono" style={styles.mono}>{cargaSugeridaKg ?? '—'}kg</span>
         </p>
-        <button style={styles.btn} onClick={marcarSerie} disabled={feitas >= series}>
+        <button style={styles.btn} onClick={onMarcarSerie} disabled={feitas >= series}>
           {feitas >= series ? 'Concluído' : 'Marcar série'}
         </button>
       </div>

@@ -7,7 +7,41 @@
   "CriadoEm": "2026-08-29T18:50:12.5403838Z",
   "ClientesIds": [],
   "PersonalTrainerId": 1,
-  "PlanoDeTreino": null,
-  "RegistrosExecucao": [],
+  "PlanoDeTreino": {
+    "Nome": "test",
+    "Dias": [
+      {
+        "Id": 1,
+        "NomeDia": "Treino 1",
+        "Exercicios": [
+          {
+            "Id": 1,
+            "Nome": "test",
+            "Series": 6,
+            "Repeticoes": 13,
+            "CargaSugeridaKg": 700,
+            "DescansoSegundos": null,
+            "Observacoes": null
+          }
+        ]
+      }
+    ]
+  },
+  "RegistrosExecucao": [
+    {
+      "DiaDeTreinoId": 1,
+      "DataExecucao": "2026-08-29T19:21:10.4460096Z",
+      "Concluido": true,
+      "Observacoes": null,
+      "Cargas": [
+        {
+          "ExercicioId": 1,
+          "SeriesFeitas": 6,
+          "RepeticoesFeitas": 13,
+          "CargaUtilizadaKg": 700
+        }
+      ]
+    }
+  ],
   "RegistrosProgresso": []
 }

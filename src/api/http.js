@@ -14,9 +14,15 @@ export async function apiFetch(path, { method = 'GET', body, token } = {}) {
 
   if (!response.ok) {
     const texto = await response.text().catch(() => '')
-    throw new Error(texto || `Erro ${response.status} ao chamar ${path}`)
+    const erro = new Error(texto || `Erro ${response.status} ao chamar ${path}`)
+    erro.status = response.status
+    throw erro
   }
 
   if (response.status === 204) return null
-  return response.json()
+
+  // Algumas respostas vêm com status 200 mas corpo vazio (ex: "salvo com sucesso"
+  // sem retornar dado nenhum) — tentar fazer .json() direto nelas quebraria.
+  const texto = await response.text()
+  return texto ? JSON.parse(texto) : null
 }
