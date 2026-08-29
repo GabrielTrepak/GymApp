@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 
 const nav = [
   { to: '/app', label: 'Treino', end: true },
@@ -7,12 +8,17 @@ const nav = [
 ]
 
 export default function ClienteLayout() {
+  const { logout } = useAuth()
+
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-surface px-5 py-4">
+      <header className="flex items-center justify-between border-b border-border bg-surface px-5 py-4">
         <span className="font-display text-lg font-bold">
           Treino<span className="text-accent">.</span>
         </span>
+        <button onClick={logout} className="rounded border border-border px-2.5 py-1.5 text-xs text-muted">
+          Sair
+        </button>
       </header>
 
       <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-24 pt-4">
