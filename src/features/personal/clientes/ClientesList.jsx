@@ -1,40 +1,73 @@
-// Dados de exemplo — substituir por GET /api/personal/clientes
-const clientesMock = [
-  { id: 1, nome: 'Marina Souza', ultimoRegistro: '28/08', pesoAtual: 62.4, deltaKg: -0.6 },
-  { id: 2, nome: 'Rafael Lima', ultimoRegistro: '27/08', pesoAtual: 81.1, deltaKg: 1.2 },
-  { id: 3, nome: 'Bianca Alves', ultimoRegistro: '25/08', pesoAtual: 58.0, deltaKg: 0.0 },
-]
+import { useEffect, useState } from 'react'
+import { useAuth } from '../../../auth/AuthContext'
+import { listarClientes } from '../../../api/personal'
+
+function formatarData(iso) {
+  if (!iso) return '—'
+  const data = new Date(iso)
+  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
 
 export default function ClientesList() {
+  const { usuario } = useAuth()
+  const [clientes, setClientes] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    listarClientes(usuario.token)
+      .then(setClientes)
+      .catch(() => setErro('Não foi possível carregar os clientes. A API está rodando?'))
+      .finally(() => setCarregando(false))
+  }, [usuario.token])
+
   return (
     <div>
       <span style={styles.eyebrow}>Visão geral</span>
       <h1 style={styles.title}>Seus clientes</h1>
 
-      <div style={styles.table}>
-        <div style={{ ...styles.row, ...styles.headRow }}>
-          <span>Nome</span>
-          <span>Último registro</span>
-          <span>Peso atual</span>
-          <span>Variação</span>
-        </div>
-        {clientesMock.map((c) => (
-          <div key={c.id} style={styles.row}>
-            <span style={{ fontWeight: 500 }}>{c.nome}</span>
-            <span className="mono" style={styles.mono}>{c.ultimoRegistro}</span>
-            <span className="mono" style={styles.mono}>{c.pesoAtual}kg</span>
-            <span
-              className="mono"
-              style={{
-                ...styles.mono,
-                color: c.deltaKg < 0 ? 'var(--gain)' : c.deltaKg > 0 ? 'var(--accent)' : 'var(--text-muted)',
-              }}
-            >
-              {c.deltaKg > 0 ? '+' : ''}{c.deltaKg}kg
-            </span>
+      {carregando && <p style={{ color: 'var(--text-muted)' }}>Carregando...</p>}
+      {erro && <p style={{ color: 'var(--accent)' }}>{erro}</p>}
+
+      {!carregando && !erro && clientes.length === 0 && (
+        <p style={{ color: 'var(--text-muted)' }}>Você ainda não tem clientes cadastrados.</p>
+      )}
+
+      {!carregando && !erro && clientes.length > 0 && (
+        <div style={styles.table}>
+          <div style={{ ...styles.row, ...styles.headRow }}>
+            <span>Nome</span>
+            <span>Último registro</span>
+            <span>Peso atual</span>
+            <span>Variação</span>
           </div>
-        ))}
-      </div>
+          {clientes.map((c) => (
+            <div key={c.id} style={styles.row}>
+              <span style={{ fontWeight: 500 }}>{c.nome}</span>
+              <span className="mono" style={styles.mono}>{formatarData(c.ultimoRegistro)}</span>
+              <span className="mono" style={styles.mono}>
+                {c.pesoAtual != null ? `${c.pesoAtual}kg` : '—'}
+              </span>
+              <span
+                className="mono"
+                style={{
+                  ...styles.mono,
+                  color:
+                    c.deltaKg == null
+                      ? 'var(--text-muted)'
+                      : c.deltaKg < 0
+                        ? 'var(--gain)'
+                        : c.deltaKg > 0
+                          ? 'var(--accent)'
+                          : 'var(--text-muted)',
+                }}
+              >
+                {c.deltaKg != null ? `${c.deltaKg > 0 ? '+' : ''}${c.deltaKg}kg` : '—'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -4,14 +4,24 @@ import { useAuth } from '../auth/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState('Cliente')
-  const { loginMock } = useAuth()
+  const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const { login } = useAuth()
   const navigate = useNavigate()
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    loginMock(email || 'usuario@teste.com', role)
-    navigate(role === 'Personal' ? '/personal' : '/app')
+    setErro('')
+    setCarregando(true)
+    try {
+      const usuario = await login(email, senha)
+      navigate(usuario.role === 'Personal' ? '/personal' : '/app')
+    } catch {
+      setErro('E-mail ou senha inválidos.')
+    } finally {
+      setCarregando(false)
+    }
   }
 
   return (
@@ -28,29 +38,27 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="voce@email.com"
+            required
           />
         </label>
 
-        <fieldset style={styles.fieldset}>
-          <legend style={styles.legend}>Entrar como</legend>
-          <div style={styles.roleRow}>
-            {['Cliente', 'Personal'].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                style={{
-                  ...styles.roleBtn,
-                  ...(role === r ? styles.roleBtnActive : {}),
-                }}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <label style={styles.label}>
+          Senha
+          <input
+            style={styles.input}
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
+        </label>
 
-        <button type="submit" style={styles.submit}>Entrar</button>
+        {erro && <p style={styles.erro}>{erro}</p>}
+
+        <button type="submit" style={styles.submit} disabled={carregando}>
+          {carregando ? 'Entrando...' : 'Entrar'}
+        </button>
       </form>
     </div>
   )
@@ -99,22 +107,10 @@ const styles = {
     fontFamily: 'var(--font-body)',
     color: 'var(--text)',
   },
-  fieldset: { border: 'none', padding: 0, margin: 0 },
-  legend: { fontSize: 14, color: 'var(--text-muted)', padding: 0, marginBottom: 6 },
-  roleRow: { display: 'flex', gap: 8 },
-  roleBtn: {
-    flex: 1,
-    padding: '10px 0',
-    borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    fontWeight: 500,
-  },
-  roleBtnActive: {
-    background: 'var(--ink)',
-    color: '#fff',
-    borderColor: 'var(--ink)',
+  erro: {
+    margin: 0,
+    fontSize: 13,
+    color: 'var(--accent)',
   },
   submit: {
     marginTop: 8,
@@ -125,5 +121,6 @@ const styles = {
     color: '#fff',
     fontWeight: 600,
     fontSize: 16,
+    opacity: 1,
   },
 }

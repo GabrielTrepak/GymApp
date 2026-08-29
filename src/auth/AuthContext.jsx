@@ -1,24 +1,41 @@
-import { createContext, useContext, useState } from 'react'
-
-// Contexto de autenticação. Por enquanto o login é mockado (sem chamada real
-// de API) — quando o backend estiver pronto, troque `loginMock` por uma
-// chamada a /api/auth/login e guarde o token retornado.
+import { createContext, useContext, useState, useEffect } from 'react'
+import { login as loginApi } from '../api/auth'
 
 const AuthContext = createContext(null)
+const STORAGE_KEY = 'gymapp_auth'
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null) // { nome, role: 'Personal' | 'Cliente' }
+  const [usuario, setUsuario] = useState(null)
+  const [carregando, setCarregando] = useState(true)
 
-  function loginMock(email, role) {
-    setUsuario({ nome: email.split('@')[0], email, role })
+  // Ao abrir o app, tenta recuperar a sessão salva (evita ter que logar de novo a cada F5)
+  useEffect(() => {
+    const salvo = localStorage.getItem(STORAGE_KEY)
+    if (salvo) {
+      try {
+        setUsuario(JSON.parse(salvo))
+      } catch {
+        localStorage.removeItem(STORAGE_KEY)
+      }
+    }
+    setCarregando(false)
+  }, [])
+
+  async function login(email, senha) {
+    const resposta = await loginApi(email, senha)
+    const dadosUsuario = { token: resposta.token, nome: resposta.nome, role: resposta.role, email }
+    setUsuario(dadosUsuario)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dadosUsuario))
+    return dadosUsuario
   }
 
   function logout() {
     setUsuario(null)
+    localStorage.removeItem(STORAGE_KEY)
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, loginMock, logout }}>
+    <AuthContext.Provider value={{ usuario, login, logout, carregando }}>
       {children}
     </AuthContext.Provider>
   )
