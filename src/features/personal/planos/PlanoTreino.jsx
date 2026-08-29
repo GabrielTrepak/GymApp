@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useAuth } from '../../../auth/AuthContext'
 import { listarClientes, obterPlanoTreino, salvarPlanoTreino } from '../../../api/personal'
 
@@ -9,6 +9,11 @@ function novoExercicio() {
 function novoDia(numero) {
   return { nomeDia: `Treino ${numero}`, exercicios: [novoExercicio()] }
 }
+
+// Uma única grade compartilhada por cabeçalho + todas as linhas de exercício,
+// pra garantir que as colunas fiquem alinhadas entre si (cada <div grid> seu
+// próprio cálculo de largura faria as colunas desalinharem de linha pra linha).
+const gridColunas = 'grid grid-cols-[2fr_0.7fr_0.7fr_0.9fr_32px] gap-x-2 gap-y-2 items-center'
 
 export default function PlanoTreino() {
   const { usuario } = useAuth()
@@ -137,9 +142,12 @@ export default function PlanoTreino() {
   }
 
   return (
-    <div>
+    <div className="max-w-4xl">
       <span className="font-data text-xs uppercase tracking-wider text-muted">Personal</span>
-      <h1 className="mb-6 mt-1.5 text-2xl">Planos de treino</h1>
+      <h1 className="mt-1.5 text-2xl">Planos de treino</h1>
+      <p className="mb-6 mt-1 text-sm text-muted">
+        Escolha o cliente, dê um nome ao plano e monte os dias de treino com os exercícios.
+      </p>
 
       {carregandoClientes && <p className="text-muted">Carregando clientes...</p>}
 
@@ -149,97 +157,115 @@ export default function PlanoTreino() {
 
       {!carregandoClientes && clientes.length > 0 && (
         <>
-          <label className="mb-4 flex max-w-[360px] flex-col gap-1.5 text-[13px] text-muted">
-            Cliente
-            <select
-              value={clienteId}
-              onChange={(e) => setClienteId(e.target.value)}
-              className="rounded border border-border bg-surface px-3 py-2.5 text-[15px] text-ink"
-            >
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="mb-5 grid max-w-xl grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1.5 text-[13px] font-medium text-muted">
+              Cliente
+              <select
+                value={clienteId}
+                onChange={(e) => setClienteId(e.target.value)}
+                className="rounded border border-border bg-surface px-3 py-2.5 text-[15px] text-ink"
+              >
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-[13px] font-medium text-muted">
+              Nome do plano
+              <input
+                value={nomePlano}
+                onChange={(e) => setNomePlano(e.target.value)}
+                placeholder="ex: Hipertrofia - fase 1"
+                className="rounded border border-border px-3 py-2.5 text-[15px] text-ink"
+              />
+            </label>
+          </div>
 
           {carregandoPlano && <p className="text-muted">Carregando plano...</p>}
 
           {!carregandoPlano && (
             <>
-              <label className="mb-4 flex max-w-[360px] flex-col gap-1.5 text-[13px] text-muted">
-                Nome do plano
-                <input
-                  value={nomePlano}
-                  onChange={(e) => setNomePlano(e.target.value)}
-                  placeholder="ex: Hipertrofia - fase 1"
-                  className="rounded border border-border px-2.5 py-2.5 text-sm text-ink"
-                />
-              </label>
-
               {dias.map((dia, diaIndice) => (
-                <div key={diaIndice} className="mb-4 max-w-[720px] rounded border border-border bg-surface p-5">
-                  <div className="mb-3.5 flex items-center justify-between">
-                    <input
-                      value={dia.nomeDia}
-                      onChange={(e) => atualizarNomeDia(diaIndice, e.target.value)}
-                      className="border-0 border-b-2 border-accent bg-transparent py-1 font-display text-base font-bold text-ink"
-                    />
+                <div key={diaIndice} className="mb-4 overflow-hidden rounded border border-border bg-surface p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted">
+                        Dia de treino
+                      </span>
+                      <input
+                        value={dia.nomeDia}
+                        onChange={(e) => atualizarNomeDia(diaIndice, e.target.value)}
+                        className="border-0 border-b-2 border-accent bg-transparent py-1 font-display text-lg font-bold text-ink focus:outline-none"
+                      />
+                    </div>
                     {dias.length > 1 && (
                       <button
                         onClick={() => removerDia(diaIndice)}
                         className="text-xs text-muted underline"
                       >
-                        Remover dia
+                        Remover {dia.nomeDia.toLowerCase()}
                       </button>
                     )}
                   </div>
 
-                  {dia.exercicios.map((ex, exIndice) => (
-                    <div key={exIndice} className="mb-2 flex items-center gap-2">
-                      <input
-                        placeholder="Nome do exercício"
-                        value={ex.nome}
-                        onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'nome', e.target.value)}
-                        className="flex-[2] rounded border border-border px-2.5 py-2 text-sm text-ink"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Séries"
-                        value={ex.series}
-                        onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'series', e.target.value)}
-                        className="flex-1 rounded border border-border px-2.5 py-2 text-sm text-ink"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Reps"
-                        value={ex.repeticoes}
-                        onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'repeticoes', e.target.value)}
-                        className="flex-1 rounded border border-border px-2.5 py-2 text-sm text-ink"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Carga (kg)"
-                        value={ex.cargaSugeridaKg}
-                        onChange={(e) =>
-                          atualizarExercicio(diaIndice, exIndice, 'cargaSugeridaKg', e.target.value)
-                        }
-                        className="flex-1 rounded border border-border px-2.5 py-2 text-sm text-ink"
-                      />
-                      <button
-                        onClick={() => removerExercicio(diaIndice, exIndice)}
-                        title="Remover exercício"
-                        className="h-[34px] w-7 rounded border border-border bg-bg text-base leading-none text-muted"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  {/* Cabeçalho + todas as linhas de exercício são filhos diretos
+                      DESTA mesma grade, pra ficarem sempre alinhados entre si */}
+                  <div className={gridColunas}>
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted">Exercício</span>
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted">Séries</span>
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted">Reps</span>
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted">Carga (kg)</span>
+                    <span />
+
+                    {dia.exercicios.map((ex, exIndice) => (
+                      <Fragment key={exIndice}>
+                        <input
+                          placeholder="ex: Supino reto"
+                          value={ex.nome}
+                          onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'nome', e.target.value)}
+                          className="w-full min-w-0 rounded border border-border px-2.5 py-2 text-sm text-ink"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          value={ex.series}
+                          onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'series', e.target.value)}
+                          className="w-full min-w-0 rounded border border-border px-2.5 py-2 text-sm text-ink"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          value={ex.repeticoes}
+                          onChange={(e) => atualizarExercicio(diaIndice, exIndice, 'repeticoes', e.target.value)}
+                          className="w-full min-w-0 rounded border border-border px-2.5 py-2 text-sm text-ink"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="opcional"
+                          value={ex.cargaSugeridaKg}
+                          onChange={(e) =>
+                            atualizarExercicio(diaIndice, exIndice, 'cargaSugeridaKg', e.target.value)
+                          }
+                          className="w-full min-w-0 rounded border border-border px-2.5 py-2 text-sm text-ink placeholder:text-xs"
+                        />
+                        <button
+                          onClick={() => removerExercicio(diaIndice, exIndice)}
+                          title="Remover exercício"
+                          className="flex h-[34px] w-8 items-center justify-center rounded border border-border bg-bg text-base leading-none text-muted hover:bg-border"
+                        >
+                          ×
+                        </button>
+                      </Fragment>
+                    ))}
+                  </div>
 
                   <button
                     onClick={() => adicionarExercicio(diaIndice)}
-                    className="py-1.5 text-[13px] font-semibold text-accent"
+                    className="mt-3 py-1.5 text-[13px] font-semibold text-accent"
                   >
                     + Adicionar exercício
                   </button>
@@ -248,14 +274,12 @@ export default function PlanoTreino() {
 
               <button
                 onClick={adicionarDia}
-                className="mb-6 w-full max-w-[720px] rounded border border-dashed border-border px-4 py-2.5 text-sm text-muted"
+                className="mb-6 w-full rounded border border-dashed border-border px-4 py-2.5 text-sm text-muted hover:bg-surface"
               >
                 + Adicionar dia de treino
               </button>
 
               <div className="flex items-center gap-4">
-                {mensagem && <span className="text-sm text-gain">{mensagem}</span>}
-                {erro && <span className="text-sm text-accent">{erro}</span>}
                 <button
                   onClick={handleSalvar}
                   disabled={salvando}
@@ -263,6 +287,8 @@ export default function PlanoTreino() {
                 >
                   {salvando ? 'Salvando...' : 'Salvar plano'}
                 </button>
+                {mensagem && <span className="text-sm text-gain">{mensagem}</span>}
+                {erro && <span className="text-sm text-accent">{erro}</span>}
               </div>
             </>
           )}
