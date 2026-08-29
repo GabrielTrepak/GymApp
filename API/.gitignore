@@ -1,0 +1,20 @@
+# Pastas de build do .NET
+bin/
+obj/
+
+# Arquivos de usuário do Visual Studio / VS Code
+*.user
+*.suo
+.vs/
+
+# Segredos locais (se algum dia usar dotnet user-secrets)
+secrets.json
+
+# Banco de dados local, caso volte a usar SQLite no futuro
+*.db
+*.db-shm
+*.db-wal
+
+# Publicação
+publish/
+*.zip
