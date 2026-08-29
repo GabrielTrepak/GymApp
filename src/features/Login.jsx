@@ -25,102 +25,50 @@ export default function Login() {
   }
 
   return (
-    <div style={styles.page}>
-      <form style={styles.card} onSubmit={handleSubmit}>
-        <span style={styles.eyebrow}>Acompanhamento de treino</span>
-        <h1 style={styles.title}>Entrar</h1>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="flex w-full max-w-sm flex-col gap-4 rounded border border-border bg-surface p-8"
+      >
+        <span className="font-data text-xs uppercase tracking-wider text-muted">
+          Acompanhamento de treino
+        </span>
+        <h1 className="text-3xl">Entrar</h1>
 
-        <label style={styles.label}>
+        <label className="flex flex-col gap-1.5 text-sm text-muted">
           E-mail
           <input
-            style={styles.input}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="voce@email.com"
             required
+            className="rounded border border-border px-3 py-2.5 text-base text-ink"
           />
         </label>
 
-        <label style={styles.label}>
+        <label className="flex flex-col gap-1.5 text-sm text-muted">
           Senha
           <input
-            style={styles.input}
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             placeholder="••••••••"
             required
+            className="rounded border border-border px-3 py-2.5 text-base text-ink"
           />
         </label>
 
-        {erro && <p style={styles.erro}>{erro}</p>}
+        {erro && <p className="m-0 text-sm text-accent">{erro}</p>}
 
-        <button type="submit" style={styles.submit} disabled={carregando}>
+        <button
+          type="submit"
+          disabled={carregando}
+          className="mt-2 rounded bg-accent py-3 text-base font-semibold text-white disabled:opacity-70"
+        >
           {carregando ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
     </div>
   )
-}
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'var(--bg)',
-    padding: 16,
-  },
-  card: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius)',
-    padding: 32,
-    width: '100%',
-    maxWidth: 360,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-  },
-  eyebrow: {
-    fontFamily: 'var(--font-data)',
-    fontSize: 12,
-    color: 'var(--text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-  },
-  title: { fontSize: 28 },
-  label: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-    fontSize: 14,
-    color: 'var(--text-muted)',
-  },
-  input: {
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 16,
-    fontFamily: 'var(--font-body)',
-    color: 'var(--text)',
-  },
-  erro: {
-    margin: 0,
-    fontSize: 13,
-    color: 'var(--accent)',
-  },
-  submit: {
-    marginTop: 8,
-    padding: '12px 0',
-    borderRadius: 8,
-    border: 'none',
-    background: 'var(--accent)',
-    color: '#fff',
-    fontWeight: 600,
-    fontSize: 16,
-    opacity: 1,
-  },
 }

@@ -8,25 +8,28 @@ const nav = [
 
 export default function ClienteLayout() {
   return (
-    <div style={styles.shell}>
-      <header style={styles.header}>
-        <span style={styles.brand}>Treino<span style={{ color: 'var(--accent)' }}>.</span></span>
+    <div className="flex min-h-screen flex-col">
+      <header className="border-b border-border bg-surface px-5 py-4">
+        <span className="font-display text-lg font-bold">
+          Treino<span className="text-accent">.</span>
+        </span>
       </header>
 
-      <main style={styles.content}>
+      <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-24 pt-4">
         <Outlet />
       </main>
 
-      <nav style={styles.bottomNav}>
+      <nav className="fixed inset-x-0 bottom-0 flex h-16 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
         {nav.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
-            style={({ isActive }) => ({
-              ...styles.tab,
-              ...(isActive ? styles.tabActive : {}),
-            })}
+            className={({ isActive }) =>
+              `flex flex-1 items-center justify-center text-sm font-medium ${
+                isActive ? 'font-bold text-accent' : 'text-muted'
+              }`
+            }
           >
             {item.label}
           </NavLink>
@@ -34,43 +37,4 @@ export default function ClienteLayout() {
       </nav>
     </div>
   )
-}
-
-const styles = {
-  shell: { minHeight: '100vh', display: 'flex', flexDirection: 'column' },
-  header: {
-    padding: '16px 20px',
-    borderBottom: '1px solid var(--border)',
-    background: 'var(--surface)',
-  },
-  brand: { fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 },
-  content: {
-    flex: 1,
-    padding: '16px 16px calc(var(--bottom-nav-h) + 24px)',
-    maxWidth: 480,
-    width: '100%',
-    margin: '0 auto',
-  },
-  bottomNav: {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 'var(--bottom-nav-h)',
-    display: 'flex',
-    background: 'var(--surface)',
-    borderTop: '1px solid var(--border)',
-    paddingBottom: 'env(safe-area-inset-bottom)',
-  },
-  tab: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 13,
-    fontWeight: 500,
-    color: 'var(--text-muted)',
-    textDecoration: 'none',
-  },
-  tabActive: { color: 'var(--accent)', fontWeight: 700 },
 }

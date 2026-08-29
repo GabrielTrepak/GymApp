@@ -41,6 +41,20 @@
           "CargaUtilizadaKg": 700
         }
       ]
+    },
+    {
+      "DiaDeTreinoId": 1,
+      "DataExecucao": "2026-08-29T19:28:17.5758955Z",
+      "Concluido": false,
+      "Observacoes": null,
+      "Cargas": [
+        {
+          "ExercicioId": 1,
+          "SeriesFeitas": 0,
+          "RepeticoesFeitas": 13,
+          "CargaUtilizadaKg": 700
+        }
+      ]
     }
   ],
   "RegistrosProgresso": []

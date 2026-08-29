@@ -11,77 +11,42 @@ export default function PersonalLayout() {
   const { usuario, logout } = useAuth()
 
   return (
-    <div style={styles.shell}>
-      <aside style={styles.sidebar}>
+    <div className="flex min-h-screen">
+      <aside className="fixed inset-y-0 flex w-60 flex-col justify-between bg-ink p-6 text-white">
         <div>
-          <div style={styles.brand}>Treino<span style={{ color: 'var(--accent)' }}>.</span></div>
-          <nav style={styles.nav}>
+          <div className="mb-8 font-display text-xl font-bold">
+            Treino<span className="text-accent">.</span>
+          </div>
+          <nav className="flex flex-col gap-1">
             {nav.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                style={({ isActive }) => ({
-                  ...styles.navItem,
-                  ...(isActive ? styles.navItemActive : {}),
-                })}
+                className={({ isActive }) =>
+                  `rounded px-3 py-2.5 text-sm font-medium ${
+                    isActive ? 'bg-white/10 text-white' : 'text-white/70'
+                  }`
+                }
               >
                 {item.label}
               </NavLink>
             ))}
           </nav>
         </div>
-        <div style={styles.userBox}>
-          <span style={styles.userName}>{usuario?.nome}</span>
-          <button style={styles.logoutBtn} onClick={logout}>Sair</button>
+        <div className="flex flex-col gap-2 text-xs">
+          <span className="text-white/60">{usuario?.nome}</span>
+          <button
+            onClick={logout}
+            className="self-start rounded border border-white/20 px-2.5 py-1.5 text-xs text-white"
+          >
+            Sair
+          </button>
         </div>
       </aside>
-      <main style={styles.content}>
+      <main className="ml-60 w-full p-8">
         <Outlet />
       </main>
     </div>
   )
-}
-
-const styles = {
-  shell: { display: 'flex', minHeight: '100vh' },
-  sidebar: {
-    width: 'var(--sidebar-w)',
-    background: 'var(--ink)',
-    color: '#fff',
-    padding: 24,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    position: 'fixed',
-    top: 0,
-    bottom: 0,
-  },
-  brand: { fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, marginBottom: 32 },
-  nav: { display: 'flex', flexDirection: 'column', gap: 4 },
-  navItem: {
-    padding: '10px 12px',
-    borderRadius: 8,
-    color: 'rgba(255,255,255,0.7)',
-    textDecoration: 'none',
-    fontSize: 14,
-    fontWeight: 500,
-  },
-  navItemActive: { background: 'rgba(255,255,255,0.08)', color: '#fff' },
-  userBox: { display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 },
-  userName: { color: 'rgba(255,255,255,0.6)' },
-  logoutBtn: {
-    background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.2)',
-    color: '#fff',
-    padding: '6px 10px',
-    borderRadius: 6,
-    fontSize: 13,
-    alignSelf: 'flex-start',
-  },
-  content: {
-    marginLeft: 'var(--sidebar-w)',
-    padding: 32,
-    width: '100%',
-  },
 }

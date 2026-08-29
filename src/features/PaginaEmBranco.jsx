@@ -3,8 +3,8 @@
 export default function PaginaEmBranco({ titulo }) {
   return (
     <div>
-      <h1 style={{ fontSize: 22 }}>{titulo}</h1>
-      <p style={{ color: 'var(--text-muted)' }}>Em construção.</p>
+      <h1 className="text-xl">{titulo}</h1>
+      <p className="text-muted">Em construção.</p>
     </div>
   )
 }

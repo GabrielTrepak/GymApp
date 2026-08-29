@@ -20,7 +20,6 @@ export default function MeuTreino() {
     obterPlanoAtivo(usuario.token)
       .then(setPlano)
       .catch((err) => {
-        // 404 aqui só significa "ainda não tem plano", não é uma falha de verdade
         if (err.status !== 404) setErroCarregamento('Não foi possível carregar seu treino.')
       })
       .finally(() => setCarregando(false))
@@ -61,21 +60,19 @@ export default function MeuTreino() {
   }
 
   if (carregando) {
-    return <p style={{ color: 'var(--text-muted)' }}>Carregando treino...</p>
+    return <p className="text-muted">Carregando treino...</p>
   }
 
   if (erroCarregamento) {
-    return <p style={{ color: 'var(--accent)' }}>{erroCarregamento}</p>
+    return <p className="text-accent">{erroCarregamento}</p>
   }
 
   if (!plano) {
     return (
       <div>
-        <span style={styles.eyebrow}>Hoje</span>
-        <h1 style={styles.title}>Sem treino por enquanto</h1>
-        <p style={{ color: 'var(--text-muted)' }}>
-          Seu personal ainda não montou um plano de treino pra você.
-        </p>
+        <span className="font-data text-xs uppercase tracking-wider text-muted">Hoje</span>
+        <h1 className="mt-1.5 text-xl">Sem treino por enquanto</h1>
+        <p className="text-muted">Seu personal ainda não montou um plano de treino pra você.</p>
       </div>
     )
   }
@@ -84,16 +81,18 @@ export default function MeuTreino() {
 
   return (
     <div>
-      <span style={styles.eyebrow}>{plano.nome}</span>
-      <h1 style={styles.title}>{dia.nomeDia}</h1>
+      <span className="font-data text-xs uppercase tracking-wider text-muted">{plano.nome}</span>
+      <h1 className="mt-1.5 text-xl">{dia.nomeDia}</h1>
 
       {plano.dias.length > 1 && (
-        <div style={styles.tabs}>
+        <div className="mt-4 flex gap-2">
           {plano.dias.map((d, i) => (
             <button
               key={d.id}
-              style={{ ...styles.tab, ...(i === diaIndice ? styles.tabAtiva : {}) }}
               onClick={() => setDiaIndice(i)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${
+                i === diaIndice ? 'border-ink bg-ink text-white' : 'border-border bg-surface text-muted'
+              }`}
             >
               {d.nomeDia}
             </button>
@@ -101,7 +100,7 @@ export default function MeuTreino() {
         </div>
       )}
 
-      <div style={{ marginTop: 20 }}>
+      <div className="mt-5">
         {dia.exercicios.map((ex) => (
           <ExercicioCard
             key={ex.id}
@@ -115,51 +114,18 @@ export default function MeuTreino() {
         ))}
       </div>
 
-      <div style={styles.rodape}>
-        {mensagem && <span style={{ color: 'var(--gain)', fontSize: 14 }}>{mensagem}</span>}
-        {erroSalvar && <span style={{ color: 'var(--accent)', fontSize: 14 }}>{erroSalvar}</span>}
+      <div className="my-2 min-h-[20px]">
+        {mensagem && <span className="text-sm text-gain">{mensagem}</span>}
+        {erroSalvar && <span className="text-sm text-accent">{erroSalvar}</span>}
       </div>
 
-      <button style={styles.btnSalvar} onClick={() => handleRegistrarTreino(dia)} disabled={salvando}>
+      <button
+        onClick={() => handleRegistrarTreino(dia)}
+        disabled={salvando}
+        className="w-full rounded bg-accent py-3.5 text-[15px] font-bold text-white disabled:opacity-70"
+      >
         {salvando ? 'Salvando...' : 'Registrar treino de hoje'}
       </button>
     </div>
   )
-}
-
-const styles = {
-  eyebrow: {
-    fontFamily: 'var(--font-data)',
-    fontSize: 12,
-    color: 'var(--text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-  },
-  title: { fontSize: 22, marginTop: 6 },
-  tabs: { display: 'flex', gap: 8, marginTop: 16 },
-  tab: {
-    padding: '6px 14px',
-    borderRadius: 999,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text-muted)',
-    fontSize: 13,
-    fontWeight: 500,
-  },
-  tabAtiva: {
-    background: 'var(--ink)',
-    color: '#fff',
-    borderColor: 'var(--ink)',
-  },
-  rodape: { marginTop: 8, marginBottom: 8, minHeight: 20 },
-  btnSalvar: {
-    width: '100%',
-    padding: '14px 0',
-    borderRadius: 'var(--radius)',
-    border: 'none',
-    background: 'var(--accent)',
-    color: '#fff',
-    fontWeight: 700,
-    fontSize: 15,
-  },
 }
