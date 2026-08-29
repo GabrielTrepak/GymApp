@@ -1,0 +1,15 @@
+{
+  "Id": 1,
+  "Nome": "Gabriel",
+  "Email": "gabriel@teste.com",
+  "SenhaHash": "AQAAAAIAAYagAAAAEN54hs\u002BTH\u002B4xp2jsJAlcvnqcbjPFBgDrHsKbGm/QSDpimdpV9Ofy7yz7RPcpRgyAUg==",
+  "Role": "Personal",
+  "CriadoEm": "2026-08-29T18:46:04.5373727Z",
+  "ClientesIds": [
+    2
+  ],
+  "PersonalTrainerId": null,
+  "PlanoDeTreino": null,
+  "RegistrosExecucao": [],
+  "RegistrosProgresso": []
+}

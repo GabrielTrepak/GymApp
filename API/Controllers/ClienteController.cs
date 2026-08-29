@@ -4,7 +4,6 @@ using GymApi.Dtos;
 using GymApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymApi.Controllers;
 
@@ -13,114 +12,90 @@ namespace GymApi.Controllers;
 [Authorize(Roles = "Cliente")]
 public class ClienteController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly JsonUserStore _store;
 
-    public ClienteController(AppDbContext db)
+    public ClienteController(JsonUserStore store)
     {
-        _db = db;
+        _store = store;
     }
 
-    private int ClienteIdAtual =>
-        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private int ClienteIdAtual => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("plano-treino-ativo")]
-    public async Task<ActionResult<PlanoAtivoResponse>> PlanoAtivo()
+    public ActionResult<PlanoAtivoResponse> PlanoAtivo()
     {
-        var clienteId = ClienteIdAtual;
-
-        var plano = await _db.PlanosDeTreino
-            .Where(p => p.ClienteId == clienteId && p.Ativo)
-            .Include(p => p.Dias)
-                .ThenInclude(d => d.Exercicios)
-            .OrderByDescending(p => p.DataInicio)
-            .FirstOrDefaultAsync();
-
-        if (plano is null)
+        var cliente = _store.BuscarPorId(ClienteIdAtual);
+        if (cliente?.PlanoDeTreino is null)
             return NotFound("Nenhum plano de treino ativo encontrado.");
 
+        var plano = cliente.PlanoDeTreino;
         var dto = new PlanoAtivoResponse(
-            plano.Id,
+            0,
             plano.Nome,
-            plano.Dias
-                .OrderBy(d => d.Ordem)
-                .Select(d => new DiaDeTreinoDto(
-                    d.Id,
-                    d.NomeDia,
-                    d.Exercicios.Select(e => new ExercicioDto(
-                        e.Id, e.Nome, e.Series, e.Repeticoes, e.CargaSugeridaKg, e.DescansoSegundos, e.Observacoes
-                    )).ToList()
-                ))
-                .ToList()
+            plano.Dias.Select(d => new DiaDeTreinoDto(
+                d.Id,
+                d.NomeDia,
+                d.Exercicios.Select(e => new ExercicioDto(
+                    e.Id, e.Nome, e.Series, e.Repeticoes, e.CargaSugeridaKg, e.DescansoSegundos, e.Observacoes
+                )).ToList()
+            )).ToList()
         );
 
         return Ok(dto);
     }
 
     [HttpPost("registro-execucao")]
-    public async Task<IActionResult> RegistrarExecucao(RegistrarExecucaoRequest req)
+    public IActionResult RegistrarExecucao(RegistrarExecucaoRequest req)
     {
-        var clienteId = ClienteIdAtual;
+        var cliente = _store.BuscarPorId(ClienteIdAtual);
+        if (cliente is null) return NotFound();
 
-        var registro = new RegistroExecucaoTreino
+        cliente.RegistrosExecucao.Add(new RegistroExecucaoArquivo
         {
-            ClienteId = clienteId,
             DiaDeTreinoId = req.DiaDeTreinoId,
             Concluido = req.Concluido,
             Observacoes = req.Observacoes,
-        };
-
-        foreach (var carga in req.Cargas)
-        {
-            registro.Cargas.Add(new RegistroCargaExercicio
+            Cargas = req.Cargas.Select(c => new CargaExercicioArquivo
             {
-                ExercicioDoDiaId = carga.ExercicioDoDiaId,
-                SeriesFeitas = carga.SeriesFeitas,
-                RepeticoesFeitas = carga.RepeticoesFeitas,
-                CargaUtilizadaKg = carga.CargaUtilizadaKg,
-            });
-        }
+                ExercicioId = c.ExercicioDoDiaId,
+                SeriesFeitas = c.SeriesFeitas,
+                RepeticoesFeitas = c.RepeticoesFeitas,
+                CargaUtilizadaKg = c.CargaUtilizadaKg,
+            }).ToList(),
+        });
 
-        _db.RegistrosExecucaoTreino.Add(registro);
-        await _db.SaveChangesAsync();
-
-        return Created(string.Empty, new { registro.Id });
+        _store.Salvar(cliente);
+        return Created(string.Empty, new { });
     }
 
     [HttpPost("registro-progresso")]
-    public async Task<IActionResult> RegistrarProgresso(RegistrarProgressoRequest req)
+    public IActionResult RegistrarProgresso(RegistrarProgressoRequest req)
     {
-        var clienteId = ClienteIdAtual;
+        var cliente = _store.BuscarPorId(ClienteIdAtual);
+        if (cliente is null) return NotFound();
 
-        var registro = new RegistroProgresso
+        cliente.RegistrosProgresso.Add(new RegistroProgressoArquivo
         {
-            ClienteId = clienteId,
             PesoKg = req.PesoKg,
             PercentualGordura = req.PercentualGordura,
             FotoUrl = req.FotoUrl,
-        };
+            Medidas = req.Medidas,
+        });
 
-        if (req.Medidas is not null)
-        {
-            foreach (var (regiao, valor) in req.Medidas)
-                registro.Medidas.Add(new MedidaCorporal { Regiao = regiao, ValorCm = valor });
-        }
-
-        _db.RegistrosProgresso.Add(registro);
-        await _db.SaveChangesAsync();
-
-        return Created(string.Empty, new { registro.Id });
+        _store.Salvar(cliente);
+        return Created(string.Empty, new { });
     }
 
     [HttpGet("historico-progresso")]
-    public async Task<ActionResult<List<RegistroProgressoResponse>>> HistoricoProgresso()
+    public ActionResult<List<RegistroProgressoResponse>> HistoricoProgresso()
     {
-        var clienteId = ClienteIdAtual;
+        var cliente = _store.BuscarPorId(ClienteIdAtual);
+        if (cliente is null) return NotFound();
 
-        var registros = await _db.RegistrosProgresso
-            .Where(r => r.ClienteId == clienteId)
+        var registros = cliente.RegistrosProgresso
             .OrderBy(r => r.Data)
             .Select(r => new RegistroProgressoResponse(r.Data, r.PesoKg, r.PercentualGordura))
-            .ToListAsync();
+            .ToList();
 
         return Ok(registros);
     }

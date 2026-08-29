@@ -4,7 +4,6 @@ using GymApi.Models;
 using GymApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,11 +12,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("GymApp"));
+// Armazenamento em arquivos JSON (um por usuário), no lugar de um banco de dados
+builder.Services.AddSingleton<JsonUserStore>();
 
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+builder.Services.AddSingleton<IPasswordHasher<UsuarioArquivo>, PasswordHasher<UsuarioArquivo>>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Configure Jwt:Key em appsettings.json");

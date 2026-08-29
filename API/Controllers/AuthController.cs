@@ -4,7 +4,6 @@ using GymApi.Models;
 using GymApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymApi.Controllers;
 
@@ -12,66 +11,63 @@ namespace GymApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _db;
-    private readonly IPasswordHasher<Usuario> _hasher;
+    private readonly JsonUserStore _store;
+    private readonly IPasswordHasher<UsuarioArquivo> _hasher;
     private readonly TokenService _tokenService;
 
-    public AuthController(AppDbContext db, IPasswordHasher<Usuario> hasher, TokenService tokenService)
+    public AuthController(JsonUserStore store, IPasswordHasher<UsuarioArquivo> hasher, TokenService tokenService)
     {
-        _db = db;
+        _store = store;
         _hasher = hasher;
         _tokenService = tokenService;
     }
 
-    // Cadastro: Personal se cadastra sozinho; Cliente precisa informar o
-    // PersonalTrainerId de quem vai acompanhá-lo (na prática, o personal cria
-    // o cadastro do cliente ou compartilha o próprio Id/link de convite).
     [HttpPost("registrar")]
-    public async Task<ActionResult<LoginResponse>> Registrar(RegistrarRequest req)
+    public ActionResult<LoginResponse> Registrar(RegistrarRequest req)
     {
-        if (await _db.Usuarios.AnyAsync(u => u.Email == req.Email))
+        if (_store.EmailExiste(req.Email))
             return Conflict("Já existe um usuário com esse e-mail.");
 
-        if (!Enum.TryParse<RoleUsuario>(req.Role, ignoreCase: true, out var role))
+        if (req.Role != "Personal" && req.Role != "Cliente")
             return BadRequest("Role inválida. Use 'Personal' ou 'Cliente'.");
 
-        var usuario = new Usuario
-        {
-            Nome = req.Nome,
-            Email = req.Email,
-            Role = role,
-        };
-        usuario.SenhaHash = _hasher.HashPassword(usuario, req.Senha);
-
-        _db.Usuarios.Add(usuario);
-        await _db.SaveChangesAsync();
-
-        if (role == RoleUsuario.Personal)
-        {
-            _db.PersonalTrainers.Add(new PersonalTrainer { Id = usuario.Id });
-        }
-        else
+        if (req.Role == "Cliente")
         {
             if (req.PersonalTrainerId is null)
                 return BadRequest("Cliente precisa informar o PersonalTrainerId.");
 
-            var personalExiste = await _db.PersonalTrainers.AnyAsync(p => p.Id == req.PersonalTrainerId);
-            if (!personalExiste)
+            var personalExistente = _store.BuscarPorId(req.PersonalTrainerId.Value);
+            if (personalExistente is null || personalExistente.Role != "Personal")
                 return BadRequest("PersonalTrainerId informado não existe.");
-
-            _db.Clientes.Add(new Cliente { Id = usuario.Id, PersonalTrainerId = req.PersonalTrainerId.Value });
         }
 
-        await _db.SaveChangesAsync();
+        var usuario = new UsuarioArquivo
+        {
+            Nome = req.Nome,
+            Email = req.Email,
+            Role = req.Role,
+            PersonalTrainerId = req.Role == "Cliente" ? req.PersonalTrainerId : null,
+        };
+        usuario.SenhaHash = _hasher.HashPassword(usuario, req.Senha);
+
+        usuario = _store.Criar(usuario);
+
+        // Vincula o cliente na lista do personal
+        if (usuario.Role == "Cliente" && usuario.PersonalTrainerId is not null)
+        {
+            var personal = _store.BuscarPorId(usuario.PersonalTrainerId.Value)!;
+            personal.ClientesIds.Add(usuario.Id);
+            _store.Salvar(personal);
+        }
 
         var token = _tokenService.GerarToken(usuario);
-        return Ok(new LoginResponse(token, usuario.Nome, usuario.Role.ToString()));
+        return Ok(new LoginResponse(token, usuario.Nome, usuario.Role));
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login(LoginRequest req)
+    public ActionResult<LoginResponse> Login(LoginRequest req)
     {
-        var usuario = await _db.Usuarios.SingleOrDefaultAsync(u => u.Email == req.Email);
+        var usuario = _store.BuscarPorEmail(req.Email);
         if (usuario is null)
             return Unauthorized("E-mail ou senha inválidos.");
 
@@ -80,6 +76,6 @@ public class AuthController : ControllerBase
             return Unauthorized("E-mail ou senha inválidos.");
 
         var token = _tokenService.GerarToken(usuario);
-        return Ok(new LoginResponse(token, usuario.Nome, usuario.Role.ToString()));
+        return Ok(new LoginResponse(token, usuario.Nome, usuario.Role));
     }
 }

@@ -1,0 +1,13 @@
+{
+  "Id": 2,
+  "Nome": "Maria",
+  "Email": "maria@teste.com",
+  "SenhaHash": "AQAAAAIAAYagAAAAEHbzDIOI0BI9gQuLBpEdZAhdo79FqJBxr2CjBkv/d12kForYS78cyZsHgprtEqDJbA==",
+  "Role": "Cliente",
+  "CriadoEm": "2026-08-29T18:50:12.5403838Z",
+  "ClientesIds": [],
+  "PersonalTrainerId": 1,
+  "PlanoDeTreino": null,
+  "RegistrosExecucao": [],
+  "RegistrosProgresso": []
+}

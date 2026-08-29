@@ -15,7 +15,7 @@ public class TokenService
         _config = config;
     }
 
-    public string GerarToken(Usuario usuario)
+    public string GerarToken(UsuarioArquivo usuario)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -25,7 +25,7 @@ public class TokenService
             new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
             new Claim(ClaimTypes.Name, usuario.Nome),
             new Claim(ClaimTypes.Email, usuario.Email),
-            new Claim(ClaimTypes.Role, usuario.Role.ToString()),
+            new Claim(ClaimTypes.Role, usuario.Role),
         };
 
         var token = new JwtSecurityToken(

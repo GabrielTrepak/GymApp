@@ -1,73 +1,77 @@
-# Gym API — Backend (.NET 8)
+# Gym API — Backend (.NET, ASP.NET Core)
 
 ⚠️ **Importante:** este código foi escrito diretamente, sem compilar aqui
 (o ambiente onde eu trabalho não tem o SDK do .NET nem acesso ao NuGet).
-Revise ao rodar pela primeira vez — é bem provável que funcione de primeira,
+Revise ao rodar pela primeira vez — bem provável que funcione de primeira,
 mas fique atento a possíveis erros de compilação.
+
+## Como funciona o "banco de dados"
+
+Pra manter simples (isso é uma demo), **não tem banco de verdade**. Cada
+usuário vira um arquivo `.json` dentro de `Dados/usuarios/`, criado
+automaticamente na primeira vez que você registra alguém — não precisa criar
+essa pasta manualmente.
+
+- `Dados/usuarios/1.json`, `Dados/usuarios/2.json`, etc. — um arquivo por
+  usuário, com todos os dados dele (login, e se for Cliente: plano de
+  treino, execuções e progresso registrados)
+- `Dados/usuarios/_indice.json` — controla o próximo Id disponível e faz o
+  mapeamento e-mail → Id (pra login não precisar abrir todos os arquivos)
+
+Essa pasta está no `.gitignore` — ela guarda senha com hash e dados de
+teste, não deveria ir pro repositório.
+
+**Diferente do banco em memória (EF InMemory) que usamos antes, agora os
+dados sobrevivem a reiniciar a API** — é só reiniciar `dotnet run` que os
+usuários continuam lá, porque estão em disco.
 
 ## Pré-requisitos
 
-- .NET 8 SDK
-- SQL Server (local, Docker, ou LocalDB no Windows)
-- `dotnet-ef` instalado globalmente: `dotnet tool install --global dotnet-ef`
+- .NET SDK (funciona com o 8 ou 9)
 
 ## Como rodar
 
-1. Ajuste a connection string em `appsettings.json` (`ConnectionStrings:Default`)
-   pro seu SQL Server local.
-2. Troque `Jwt:Key` por uma chave secreta de verdade (mín. 32 caracteres) —
-   **nunca** commite a chave real; use `dotnet user-secrets` ou variável de
-   ambiente em produção.
-3. Restaura os pacotes e cria o banco:
+1. Troque `Jwt:Key` (em `appsettings.json`) por uma chave secreta de
+   verdade (mín. 32 caracteres) — **nunca** commite a chave real; use
+   `dotnet user-secrets` ou variável de ambiente em produção.
+2. Restaura os pacotes:
 
 ```bash
 dotnet restore
-dotnet ef migrations add Inicial
-dotnet ef database update
 ```
 
-4. Roda a API:
+3. Roda a API:
 
 ```bash
 dotnet run
 ```
 
-O Swagger sobe em `https://localhost:<porta>/swagger` — use ele pra testar
-os endpoints sem precisar do frontend ainda.
+Pra ver o Swagger (documentação interativa), roda em modo Development:
 
-## Fluxo de teste sugerido (via Swagger ou Postman)
+```bash
+# PowerShell
+$env:ASPNETCORE_ENVIRONMENT="Development"
+dotnet run
+```
 
-1. `POST /api/auth/registrar` com `role: "Personal"` → anota o `Id` retornado
-   no token (dá pra decodificar em jwt.io) ou consulta direto no banco.
-2. `POST /api/auth/registrar` de novo com `role: "Cliente"` e
-   `personalTrainerId` apontando pro Personal criado no passo 1.
-3. `POST /api/auth/login` com o Cliente → copia o token.
-4. No Swagger, clica em "Authorize" e cola `Bearer <token>`.
-5. Popula um `PlanoDeTreino` com `DiaDeTreino` e `ExercicioDoDia` direto no
-   banco (ainda não tem endpoint do personal pra criar plano — é o próximo
-   passo) e testa `GET /api/cliente/plano-treino-ativo`.
+Depois abre `http://localhost:5000/swagger`.
 
 ## O que falta (próximos passos)
 
-- Endpoints do Personal para criar/editar `PlanoDeTreino` e seus dias/exercícios
-  (hoje só existe leitura do lado do cliente — a escrita ainda é manual no banco)
-- Entidades e endpoints de `PlanoDeDieta` / `Refeicao` / `ItemRefeicao`
-  (mesmo padrão do treino, adiado de propósito pra manter esse primeiro
-  corte pequeno)
-- Conectar o frontend: trocar `loginMock` em `src/auth/AuthContext.jsx`
-  pela chamada real a `POST /api/auth/login`, guardando o token e
-  mandando ele no header `Authorization: Bearer <token>` de cada request
-- Validação de entrada mais robusta (hoje os DTOs não têm anotações de
-  validação como `[Required]`/`[Range]`)
-- Migrar `appsettings.json` pra não guardar segredos em texto puro
-  (`dotnet user-secrets` em dev, variáveis de ambiente/Key Vault em produção)
+- Endpoints do Personal para criar/editar o plano de treino do cliente
+  (hoje só existe leitura do lado do cliente)
+- Dieta (mesmo padrão do treino, adiado de propósito)
+- Conectar o frontend às rotas de treino/progresso (já conectamos
+  login e listagem de clientes)
+- Validação de entrada mais robusta nos DTOs
 
 ## Estrutura
 
 ```
-/Models        → entidades (tabelas do banco)
-/Data          → AppDbContext (mapeamento EF Core)
+/Models        → UsuarioArquivo (e as classes aninhadas: plano, exercícios, registros)
+/Data          → JsonUserStore (lê/escreve os arquivos JSON)
 /Dtos          → contratos de entrada/saída da API
 /Services      → TokenService (geração de JWT)
 /Controllers   → AuthController, PersonalController, ClienteController
+/Dados         → gerado em runtime, não vai pro Git (dados dos usuários)
 ```

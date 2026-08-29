@@ -7,6 +7,7 @@ import PaginaEmBranco from './features/PaginaEmBranco'
 
 import PersonalLayout from './layouts/PersonalLayout'
 import ClientesList from './features/personal/clientes/ClientesList'
+import PlanoTreino from './features/personal/planos/PlanoTreino'
 
 import ClienteLayout from './layouts/ClienteLayout'
 import MeuTreino from './features/cliente/meu-treino/MeuTreino'
@@ -28,7 +29,7 @@ export default function App() {
             }
           >
             <Route index element={<ClientesList />} />
-            <Route path="planos" element={<PaginaEmBranco titulo="Planos de treino" />} />
+            <Route path="planos" element={<PlanoTreino />} />
             <Route path="dietas" element={<PaginaEmBranco titulo="Planos de dieta" />} />
           </Route>
 
